@@ -151,6 +151,7 @@ export async function POST(req: NextRequest) {
   }
 
   const customerEmail =
+    body?.data?.user?.email ||
     body?.data?.member?.email ||
     body?.data?.customer?.email ||
     body?.customer_email ||
