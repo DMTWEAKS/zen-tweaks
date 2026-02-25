@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  let body: any;
+  let body: unknown;
   try {
     body = JSON.parse(rawBody);
   } catch (err) {
@@ -171,7 +171,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const eventType: string | undefined = body?.event_type || body?.eventType || body?.type;
+  const event = body as {
+    event_type?: string;
+    eventType?: string;
+    type?: string;
+    event_id?: string;
+    body?: {
+      billing_email?: string;
+      customer?: { email?: string; billing_email?: string };
+      [key: string]: unknown;
+    };
+    customer?: { email?: string };
+    user?: { email?: string };
+    delivery_item?: { metadata?: { email?: string } };
+    metadata?: { email?: string };
+    [key: string]: unknown;
+  };
+  const eventType: string | undefined =
+    event?.event_type || event?.eventType || event?.type;
   log("INFO", requestId, "Event type received", { eventType });
 
   if (eventType !== "ON_ORDER_COMPLETED") {
@@ -179,14 +196,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true, ignored: true });
   }
 
-  // Try a few reasonable locations for the buyer email based on typical webhook shapes.
+  // PayNow ON_ORDER_COMPLETED payload (JSON v1) puts the data under `body`,
+  // with the buyer email typically at `body.billing_email`.
   const customerEmail: string | undefined =
-    body?.order?.customer?.email ||
-    body?.order?.user?.email ||
-    body?.customer?.email ||
-    body?.user?.email ||
-    body?.delivery_item?.metadata?.email ||
-    body?.metadata?.email;
+    event?.body?.billing_email ||
+    event?.body?.customer?.email ||
+    event?.body?.customer?.billing_email ||
+    event?.customer?.email ||
+    event?.user?.email ||
+    event?.delivery_item?.metadata?.email ||
+    event?.metadata?.email;
 
   if (!customerEmail) {
     log("ERROR", requestId, "No customer email found in webhook payload", {
@@ -219,7 +238,7 @@ export async function POST(req: NextRequest) {
           status: "sold",
           soldToEmail: customerEmail,
           soldAt: new Date(),
-          paynowEventId: body?.id ?? null,
+          paynowEventId: event?.event_id ?? null,
           paynowEventType: eventType,
           source: "paynow",
         },
