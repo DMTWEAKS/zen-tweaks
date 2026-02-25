@@ -217,7 +217,10 @@ export async function POST(req: NextRequest) {
 
   const licenseKeysCollection = db.collection("license_keys");
 
-  let claimedKey: string | null = null;
+  // ────────────────────────────────────────────────
+  // Claim license key safely
+  // ────────────────────────────────────────────────
+  let claimedKey: string;
 
   try {
     const result = await licenseKeysCollection.findOneAndUpdate(
@@ -235,21 +238,20 @@ export async function POST(req: NextRequest) {
       { returnDocument: "after" }
     );
 
-    // Handle MongoDB response safely
-    const updatedDoc = result.value ?? null;
-    if (updatedDoc?.key) {
-      claimedKey = updatedDoc.key as string;
-      log("INFO", requestId, "✓ License key claimed successfully", {
-        keyId: updatedDoc._id?.toString() || null,
-        keyPreview: `${claimedKey.slice(0, 4)}...${claimedKey.slice(-4)}`,
-      });
-    } else {
+    if (!result || !result.value || !result.value.key) {
       log("ERROR", requestId, "✗ NO AVAILABLE LICENSE KEYS!", { customerEmail });
       return NextResponse.json(
         { received: true, error: "No license keys available - MANUAL INTERVENTION REQUIRED" },
         { status: 200 }
       );
     }
+
+    claimedKey = result.value.key as string;
+
+    log("INFO", requestId, "✓ License key claimed successfully", {
+      keyId: result.value._id?.toString() || null,
+      keyPreview: `${claimedKey.slice(0, 4)}...${claimedKey.slice(-4)}`,
+    });
   } catch (err) {
     log("ERROR", requestId, "Failed to claim license key", { error: String(err) });
     return NextResponse.json({ error: "Failed to claim license key" }, { status: 500 });
@@ -268,8 +270,8 @@ export async function POST(req: NextRequest) {
       from: EMAIL_FROM,
       to: customerEmail,
       subject: `Your ${PRODUCT_NAME} License Key`,
-      html: generateLicenseEmailHtml(claimedKey!, PRODUCT_NAME),
-      text: generateLicenseEmailText(claimedKey!, PRODUCT_NAME),
+      html: generateLicenseEmailHtml(claimedKey, PRODUCT_NAME),
+      text: generateLicenseEmailText(claimedKey, PRODUCT_NAME),
     });
 
     if (emailResult.error) throw new Error(emailResult.error.message);
@@ -283,7 +285,7 @@ export async function POST(req: NextRequest) {
   log("INFO", requestId, "=== FULFILLMENT COMPLETE ===", {
     customerEmail,
     productName: PRODUCT_NAME,
-    keyPreview: `${claimedKey!.slice(0, 4)}...${claimedKey!.slice(-4)}`,
+    keyPreview: `${claimedKey.slice(0, 4)}...${claimedKey.slice(-4)}`,
   });
 
   return NextResponse.json({ received: true, fulfilled: true });
