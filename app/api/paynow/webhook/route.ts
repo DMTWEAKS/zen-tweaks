@@ -196,8 +196,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true, ignored: true });
   }
 
-  // PayNow ON_ORDER_COMPLETED payload (JSON v1) puts the data under `body`,
-  // with the buyer email typically at `body.billing_email`.
   const customerEmail: string | undefined =
     event?.body?.billing_email ||
     event?.body?.customer?.email ||
@@ -211,7 +209,6 @@ export async function POST(req: NextRequest) {
     log("ERROR", requestId, "No customer email found in webhook payload", {
       bodyPreview: JSON.stringify(body).slice(0, 500),
     });
-    // 200 so PayNow doesn't retry forever; we'll adjust once we know the exact payload structure.
     return NextResponse.json({ error: "No customer email" }, { status: 200 });
   }
 
