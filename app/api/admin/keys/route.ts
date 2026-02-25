@@ -36,10 +36,16 @@ export async function GET(req: NextRequest) {
       filter.status = status;
     }
 
+    // Default sort: newest first. For sold keys, prefer most recently sold.
+    const sort: Record<string, 1 | -1> =
+      filter.status === "sold"
+        ? { soldAt: -1, createdAt: -1 }
+        : { createdAt: -1 };
+
     const [keys, total] = await Promise.all([
       collection
         .find(filter)
-        .sort({ createdAt: -1 })
+        .sort(sort)
         .skip(skip)
         .limit(limit)
         .toArray(),
