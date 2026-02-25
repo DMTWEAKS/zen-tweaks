@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { Reveal, Stagger } from "@/components/motion";
+import { PayNowCheckoutButton } from "@/components/integrations/PayNowCheckoutButton";
 
 const ELLIPSE_BG = "/assets/figma/backgrounds/ellipse-bg.png";
 
@@ -191,19 +192,7 @@ export default function ProductHero() {
 
               <div className="h-px w-full" style={{ background: 'rgba(63, 219, 255, 0.05)' }} />
 
-              <a
-                href="https://whop.com/checkout/plan_EKUlELEnRicq2"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-[20px] px-[48px] py-[14px] font-inter text-[17px] font-medium tracking-[-0.34px] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(63,219,255,0.4)] active:scale-[0.98]"
-                style={{
-                  background: '#3fdbff',
-                  color: '#090909',
-                  backdropFilter: 'blur(4px)',
-                }}
-              >
-                Buy now
-              </a>
+              <PayNowCheckoutButton token={process.env.NEXT_PUBLIC_PAYNOW_CHECKOUT_TOKEN ?? ""} />
             </Reveal>
 
             <Reveal
