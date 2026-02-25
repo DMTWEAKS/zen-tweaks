@@ -192,7 +192,8 @@ export default function ProductHero() {
 
               <div className="h-px w-full" style={{ background: 'rgba(63, 219, 255, 0.05)' }} />
 
-              <PayNowCheckoutButton token={process.env.NEXT_PUBLIC_PAYNOW_CHECKOUT_TOKEN ?? ""} />
+              {/* Use dynamic checkout creation; do not pass a static (re-usable) token */}
+              <PayNowCheckoutButton token="" />
             </Reveal>
 
             <Reveal
