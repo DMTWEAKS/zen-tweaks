@@ -1,4 +1,4 @@
-import SuccessHero from "@/components/sections/success/SuccessHero";
+import SuccessHero from "@/components/sections/success/SuccessHero.tsx";
 
 export const metadata = {
   title: "Purchase Complete – Zen Tweaks",
